@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, ChevronRight, Loader2, MapPin, Phone, X, AlertCircle, 
   CheckCircle, ArrowLeft, Trash2, ShoppingBag, CreditCard, 
-  Wallet, Lock, HelpCircle, ChevronDown, ChevronUp
+  Wallet, Lock, HelpCircle, Ticket
 } from 'lucide-react';
 import API from '../api/axios';
 import { useTheme } from '../context/ThemeContext';
@@ -15,7 +15,7 @@ const Checkout = () => {
   const { darkMode } = useTheme();
   
   const cart = location.state?.cart || [];
-  const totalPrice = location.state?.totalPrice || 0;
+  const initialTotalPrice = location.state?.totalPrice || 0;
 
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState(null);
@@ -28,12 +28,72 @@ const Checkout = () => {
   const [cardName, setCardName] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
-  const [showCardForm, setShowCardForm] = useState(false);
   const [shippingData, setShippingData] = useState({
     address: '',
     city: 'Addis Ababa',
     phone: '',
   });
+
+  // Promo / Coupon Code States
+  const [promoCode, setPromoCode] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [couponPercentage, setCouponPercentage] = useState(0); 
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoSuccess, setPromoSuccess] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
+
+  // Dynamically calculate final price
+  const finalTotalPrice = Math.max(0, initialTotalPrice - discount);
+
+  const handleApplyPromoCode = async (e) => {
+    e.preventDefault();
+    if (!promoCode.trim()) return;
+
+    try {
+      setPromoLoading(true);
+      setError(''); 
+      setPromoSuccess('');
+
+      const response = await API.post('/orders/validate-coupon', { 
+        code: promoCode.trim(),
+        totalPrice: initialTotalPrice 
+      });
+
+      // FIX: Destructure multiple potential fallback keys from backend payload
+      const discountAmount = response.data.discountAmount || response.data.discount || 0;
+      const percentage = response.data.percentage || response.data.discountPercent || Math.round((discountAmount / initialTotalPrice) * 100) || 10;
+      
+      if (discountAmount === 0 && percentage > 0) {
+        setDiscount((initialTotalPrice * percentage) / 100);
+        setCouponPercentage(percentage);
+      } else {
+        setDiscount(discountAmount);
+        setCouponPercentage(percentage);
+      }
+
+      setPromoSuccess(response.data.message || `Promo code applied successfully!`);
+      setPromoApplied(true);
+    } catch (err) {
+      console.error('Promo validation error:', err);
+      setError(err.response?.data?.message || "Invalid or expired promo code");
+      setDiscount(0);
+      setCouponPercentage(0);
+      setPromoApplied(false);
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleCouponInputChange = (value) => {
+    setPromoCode(value.toUpperCase());
+    if (promoApplied) {
+      setPromoApplied(false);
+      setDiscount(0);
+      setCouponPercentage(0);
+      setPromoSuccess('');
+      setError('');
+    }
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -62,30 +122,30 @@ const Checkout = () => {
       return false;
     }
     if (!/^09\d{8}$/.test(shippingData.phone.replace(/\D/g, ''))) {
-      setError('Valid phone: 09XXXXXXXX');
+      setError('Valid phone number format required: 09XXXXXXXX');
       return false;
     }
     
     if (selectedPayment === 'telebirr' && !image) {
-      setError('Upload payment screenshot');
+      setError('Please upload your payment screenshot');
       return false;
     }
     
     if (selectedPayment === 'card') {
       if (!cardNumber || cardNumber.replace(/\s/g, '').length < 16) {
-        setError('Please enter valid card number');
+        setError('Please enter a valid card number');
         return false;
       }
       if (!cardName) {
-        setError('Please enter cardholder name');
+        setError('Please enter the cardholder name');
         return false;
       }
       if (!expiryDate) {
-        setError('Please enter expiry date');
+        setError('Please enter the card expiry date');
         return false;
       }
       if (!cvv || cvv.length < 3) {
-        setError('Please enter CVV');
+        setError('Please enter a valid CVV');
         return false;
       }
     }
@@ -102,15 +162,14 @@ const Checkout = () => {
       setLoading(true);
       const formData = new FormData();
       
-      // Build orderItems with size and color
       const orderItems = cart.map(item => ({
         name: item.name,
         qty: item.qty,
         image: item.imageFront || item.imageBack || item.image,
         price: item.price,
         product: item._id,
-        size: item.selectedSize || 'One Size',      // from cart item
-        color: item.selectedColor || 'Default'      // from cart item
+        size: item.selectedSize || 'One Size',
+        color: item.selectedColor || 'Default'
       }));
 
       formData.append('orderItems', JSON.stringify(orderItems));
@@ -118,8 +177,13 @@ const Checkout = () => {
         ...shippingData,
         country: 'Ethiopia'
       }));
-      formData.append('totalPrice', totalPrice);
+      
+      formData.append('totalPrice', finalTotalPrice); 
       formData.append('paymentMethod', selectedPayment);
+      
+      if (promoApplied) {
+        formData.append('couponCode', promoCode.toUpperCase().trim());
+      }
       
       if (selectedPayment === 'telebirr' && image) {
         formData.append('image', image);
@@ -140,7 +204,7 @@ const Checkout = () => {
       localStorage.removeItem('cart');
       
       setTimeout(() => {
-        navigate('/profile', { state: { orderSuccess: true, orderId: response.data.order?._id } });
+        navigate('/profile', { state: { orderSuccess: true, orderId: response.data.createdOrder?._id } });
       }, 2000);
       
     } catch (err) {
@@ -166,21 +230,16 @@ const Checkout = () => {
   const formatCardNumber = (value) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || '';
     const parts = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return value;
-    }
+    return parts.length ? parts.join(' ') : value;
   };
 
   const handleCardNumberChange = (e) => {
-    const formatted = formatCardNumber(e.target.value);
-    setCardNumber(formatted);
+    setCardNumber(formatCardNumber(e.target.value));
   };
 
   const formatExpiryDate = (value) => {
@@ -281,7 +340,7 @@ const Checkout = () => {
           )}
         </AnimatePresence>
         
-        {/* Success Message */}
+        {/* Success Alert */}
         {success && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
@@ -291,12 +350,12 @@ const Checkout = () => {
             <CheckCircle size={20} className="text-green-500" />
             <div>
               <p className="text-sm font-medium text-green-800">Order placed successfully!</p>
-              <p className="text-xs text-green-600">Redirecting to your orders...</p>
+              <p className="text-xs text-green-600">Redirecting to your profile dashboard...</p>
             </div>
           </motion.div>
         )}
         
-        {/* Error Message */}
+        {/* General Error Alert */}
         {error && !success && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
@@ -313,13 +372,13 @@ const Checkout = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
-          {/* LEFT: CHECKOUT FORM */}
+          {/* LEFT AREA: CHECKOUT FORMS */}
           <div className="space-y-6">
             <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Checkout Information
             </h1>
             
-            {/* Delivery Section */}
+            {/* Delivery Form */}
             <div className={`rounded-2xl p-6 shadow-sm border transition-colors ${
               darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
             }`}>
@@ -337,7 +396,7 @@ const Checkout = () => {
                     } w-4 h-4`} />
                     <textarea 
                       required 
-                      placeholder="Your full address"
+                      placeholder="Your full delivery address details"
                       className={`w-full pl-10 pr-3 py-2 rounded-lg outline-none text-sm resize-none h-20 transition-colors ${
                         darkMode 
                           ? 'bg-gray-700 border-gray-600 text-white focus:border-orange-500' 
@@ -374,7 +433,7 @@ const Checkout = () => {
               </div>
             </div>
             
-            {/* Payment Section */}
+            {/* Payment Selector Form */}
             <div className={`rounded-2xl p-6 shadow-sm border transition-colors ${
               darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
             }`}>
@@ -403,10 +462,7 @@ const Checkout = () => {
                 
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelectedPayment('card');
-                    setShowCardForm(true);
-                  }}
+                  onClick={() => setSelectedPayment('card')}
                   className={`w-full flex items-center justify-between p-4 border rounded-xl transition-all ${
                     selectedPayment === 'card' 
                       ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' 
@@ -419,13 +475,13 @@ const Checkout = () => {
                       Credit / Debit Card
                     </span>
                   </div>
-                  <div className="flex gap-1">
-                    <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Visa</span>
-                    <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>Mastercard</span>
+                  <div className="flex gap-1 text-xs text-gray-400">
+                    <span>Visa</span> • <span>Mastercard</span>
                   </div>
                 </button>
               </div>
               
+              {/* Credit Card Detailed Entry */}
               {selectedPayment === 'card' && (
                 <div className="space-y-4">
                   <div>
@@ -476,8 +532,8 @@ const Checkout = () => {
                           darkMode 
                             ? 'bg-gray-700 border-gray-600 text-white focus:border-orange-500' 
                             : 'bg-white border-gray-200 focus:border-orange-300'
-                        } border`}
-                      />
+                      } border`}
+                    />
                     </div>
                     <div>
                       <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -500,13 +556,14 @@ const Checkout = () => {
                 </div>
               )}
               
+              {/* Telebirr Detailed Entry with Screen Upload */}
               {selectedPayment === 'telebirr' && (
                 <div className="mt-4">
                   <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800 mb-4">
                     <p className="text-sm font-medium text-orange-800 dark:text-orange-300 mb-1">Send payment to:</p>
                     <p className="text-xl font-bold text-orange-700 dark:text-orange-400 font-mono">0911223344</p>
                     <p className={`text-xs ${darkMode ? 'text-orange-400/80' : 'text-orange-600'} mt-1`}>
-                      Amount: {totalPrice.toLocaleString()} ETB
+                      Amount Due: {finalTotalPrice.toLocaleString()} ETB
                     </p>
                   </div>
                   
@@ -525,7 +582,7 @@ const Checkout = () => {
                         >
                           <X size={12}/>
                         </button>
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-2">✓ Screenshot uploaded</p>
+                        <p className="text-xs text-green-600 dark:text-green-400 mt-2">✓ Screenshot attached</p>
                       </div>
                     ) : (
                       <label className="cursor-pointer flex flex-col items-center py-6 px-4">
@@ -533,7 +590,7 @@ const Checkout = () => {
                         <span className={`text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                           Upload Payment Screenshot
                         </span>
-                        <span className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                        <span className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>
                           PNG, JPG up to 5MB
                         </span>
                         <input type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
@@ -544,6 +601,7 @@ const Checkout = () => {
               )}
             </div>
             
+            {/* Bottom Actions Row */}
             <div className="flex gap-4">
               <button
                 type="button"
@@ -564,7 +622,7 @@ const Checkout = () => {
                 {loading ? (
                   <>
                     <Loader2 className="animate-spin" size={16} />
-                    Processing...
+                    Processing Order...
                   </>
                 ) : (
                   'Checkout'
@@ -572,21 +630,19 @@ const Checkout = () => {
               </button>
             </div>
             
-            <div className={`flex items-center justify-between text-xs pt-4 ${
+            <div className={`flex items-center justify-between text-xs pt-2 ${
               darkMode ? 'text-gray-500' : 'text-gray-400'
             }`}>
-              <button className={`flex items-center gap-1 hover:${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                <HelpCircle size={12} />
-                Help?
+              <button type="button" className={`flex items-center gap-1 hover:${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <HelpCircle size={12} /> Support Help?
               </button>
               <div className="flex items-center gap-1">
-                <Lock size={12} />
-                All Payments Are Secured
+                <Lock size={12} /> All Transactions Securely Encrypted
               </div>
             </div>
           </div>
           
-          {/* RIGHT: ORDER SUMMARY with size/color */}
+          {/* RIGHT AREA: STICKY ORDER SUMMARY */}
           <div className="lg:sticky lg:top-8 h-fit">
             <div className={`rounded-2xl p-6 shadow-sm border transition-colors ${
               darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
@@ -595,72 +651,133 @@ const Checkout = () => {
                 Order Summary
               </h2>
               
-              <div className="space-y-4 max-h-96 overflow-y-auto mb-6">
-                {cart.map((item) => (
-                  <div key={item._id} className={`flex gap-4 pb-4 border-b ${
-                    darkMode ? 'border-gray-700' : 'border-gray-100'
-                  }`}>
-                    <div className={`w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 ${
-                      darkMode ? 'bg-gray-700' : 'bg-gray-50'
+              <div className="space-y-4 max-h-80 overflow-y-auto mb-6">
+                {cart.map((item, index) => {
+                  const customItemKey = `${item._id || index}-${item.selectedSize || 'OS'}-${item.selectedColor || 'DF'}`;
+                  
+                  return (
+                    <div key={customItemKey} className={`flex gap-4 pb-4 border-b ${
+                      darkMode ? 'border-gray-700' : 'border-gray-100'
                     }`}>
-                      <img 
-                        src={item.imageFront || item.imageBack || item.image} 
-                        className="w-full h-full object-cover" 
-                        alt={item.name}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {item.name}
-                      </p>
-                      {/* Display size and color from cart item */}
-                      <div className="flex gap-2 mt-1">
-                        {item.selectedSize && (
-                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Size: {item.selectedSize}
-                          </p>
-                        )}
-                        {item.selectedColor && (
-                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Color: {item.selectedColor}
-                          </p>
-                        )}
+                      <div className={`w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 ${
+                        darkMode ? 'bg-gray-700' : 'bg-gray-50'
+                      }`}>
+                        <img 
+                          src={item.imageFront || item.imageBack || item.image} 
+                          className="w-full h-full object-cover" 
+                          alt=""
+                        />
                       </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          Qty: {item.qty}
-                        </p>
+                      <div className="flex-1">
                         <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {item.price.toLocaleString()} ETB
+                          {item.name}
                         </p>
+                        
+                        <div className="flex gap-2 mt-1">
+                          {item.selectedSize && (
+                            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              Size: {item.selectedSize}
+                            </p>
+                          )}
+                          {item.selectedColor && (
+                            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              Color: {item.selectedColor}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between mt-2">
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Qty: {item.qty}
+                          </p>
+                          <p className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                            {(item.price * item.qty).toLocaleString()} ETB
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* COUPON REDEMPTION BANNER */}
+              <div className={`pb-4 mb-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                <form onSubmit={handleApplyPromoCode} className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Ticket className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                      darkMode ? 'text-gray-500' : 'text-gray-400'
+                    }`} />
+                    <input
+                      type="text"
+                      placeholder="Enter Coupon Code"
+                      value={promoCode}
+                      onChange={(e) => handleCouponInputChange(e.target.value)}
+                      className={`w-full pl-9 pr-3 py-2 rounded-lg outline-none text-sm transition-colors uppercase ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-orange-500' 
+                          : 'bg-white border-gray-200 focus:border-orange-300'
+                      } border`}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={promoLoading || !promoCode.trim()}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      promoApplied 
+                        ? 'bg-green-600 text-white opacity-90' 
+                        : 'bg-black text-white hover:bg-orange-600 disabled:opacity-40'
+                    }`}
+                  >
+                    {promoLoading ? <Loader2 size={16} className="animate-spin" /> : promoApplied ? 'Applied' : 'Apply'}
+                  </button>
+                </form>
+                {promoSuccess && (
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1">
+                    <CheckCircle size={12} /> {promoSuccess}
+                  </p>
+                )}
+              </div>
+              
+              {/* Financial Overview */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>Subtotal</span>
+                  <span className={darkMode ? 'text-white' : 'text-gray-900'}>{initialTotalPrice.toLocaleString()} ETB</span>
+                </div>
+                
+                {/* VISIBLE MATH FORMULA FOR USER */}
+                {promoApplied && (
+                  <div className="bg-green-50 dark:bg-green-950/40 p-3 rounded-lg border border-green-200 text-xs my-2">
+                    <div className="flex flex-col gap-1 text-green-700 dark:text-green-400 font-medium">
+                      <div className="flex justify-between">
+                        <span>Discount Formula:</span>
+                        <span className="font-mono font-bold">
+                          {initialTotalPrice.toLocaleString()} × {couponPercentage}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-t border-green-200 dark:border-green-900 pt-1 mt-1 font-bold">
+                        <span>Total Saved Deduction:</span>
+                        <span>-{discount.toLocaleString()} ETB</span>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-              
-              <div className={`pt-4 border-t space-y-3 ${
-                darkMode ? 'border-gray-700' : 'border-gray-100'
-              }`}>
-                <div className={`flex justify-between ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  <span>Subtotal</span>
-                  <span>{totalPrice.toLocaleString()} ETB</span>
+                )}
+
+                <div className="flex justify-between text-sm">
+                  <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>Shipping Fee</span>
+                  <span className="text-green-600 font-medium">Free</span>
                 </div>
-                <div className={`flex justify-between ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  <span>Shipping</span>
-                  <span className="text-green-600">Free</span>
-                </div>
-                <div className={`flex justify-between pt-3 border-t ${
-                  darkMode ? 'border-gray-700' : 'border-gray-100'
+                <div className={`flex justify-between text-base font-bold pt-3 border-t ${
+                  darkMode ? 'border-gray-700 text-white' : 'border-gray-100 text-gray-900'
                 }`}>
-                  <span className="text-lg font-semibold">Total</span>
-                  <span className="text-2xl font-bold text-orange-600">
-                    {totalPrice.toLocaleString()} ETB
-                  </span>
+                  <span>Total Amount</span>
+                  <span className="text-orange-500">{finalTotalPrice.toLocaleString()} ETB</span>
                 </div>
               </div>
+
             </div>
           </div>
+
         </div>
       </div>
     </div>

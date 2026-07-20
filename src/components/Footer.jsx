@@ -99,13 +99,13 @@ const Footer = () => {
                 darkMode ? 'text-gray-400' : 'text-gray-500'
               }`}>
                 <MapPin className="w-3.5 h-3.5 mr-3 mt-0.5 text-red-600" />
-                <span>Addis Ababa, Ethiopia</span>
+                <span>Bahrdar, Ethiopia</span>
               </li>
               <li className={`flex items-center text-xs ${
                 darkMode ? 'text-gray-400' : 'text-gray-500'
               }`}>
                 <Phone className="w-3.5 h-3.5 mr-3 text-red-600" />
-                <span>+251 911 234 567</span>
+                <span>+251 927 993 894</span>
               </li>
               <li className={`flex items-center text-xs ${
                 darkMode ? 'text-gray-400' : 'text-gray-500'
