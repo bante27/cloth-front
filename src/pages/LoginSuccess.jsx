@@ -16,8 +16,8 @@ const LoginSuccess = ({ onLoginSuccess }) => {
     if (userParam) {
       try {
         const userData = JSON.parse(decodeURIComponent(userParam));
-        // Save to localStorage
-        localStorage.setItem('userInfo', JSON.stringify(userData));
+        // Save to sessionStorage
+        sessionStorage.setItem('userInfo', JSON.stringify(userData));
         // Update parent state (if provided)
         if (onLoginSuccess) {
           onLoginSuccess(userData);

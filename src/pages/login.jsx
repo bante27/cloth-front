@@ -51,7 +51,7 @@ const Login = ({ onLoginSuccess }) => {
     setLoading(true);
     try {
       const { data } = await API.post('/users/login', { email, password });
-      localStorage.setItem('userInfo', JSON.stringify(data));
+      sessionStorage.setItem('userInfo', JSON.stringify(data));
       if (onLoginSuccess) onLoginSuccess(data);
       navigate('/shop');
     } catch (err) {

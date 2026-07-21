@@ -21,7 +21,7 @@ const Register = () => {
     try {
       setLoading(true);
       const { data } = await API.post('/users/register', formData);
-      localStorage.setItem('userInfo', JSON.stringify(data));
+      sessionStorage.setItem('userInfo', JSON.stringify(data));
       alert("Account created successfully!");
       navigate('/shop');
       // Optional: reload to update navbar state

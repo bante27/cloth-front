@@ -29,21 +29,21 @@ function AppContent() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
 
-  // User state from localStorage
+  // User state from sessionStorage
   const [userInfo, setUserInfo] = useState(() => {
-    const saved = localStorage.getItem('userInfo');
+    const saved = sessionStorage.getItem('userInfo');
     return (saved && saved !== "undefined" && saved !== "null") ? JSON.parse(saved) : null;
   });
 
   const handleLoginSuccess = (data) => {
     setUserInfo(data);
-    localStorage.setItem('userInfo', JSON.stringify(data));
+    sessionStorage.setItem('userInfo', JSON.stringify(data));
   };
 
   const logoutHandler = () => {
     if (window.confirm("Are you sure you want to logout?")) {
-      localStorage.removeItem('userInfo');
-      localStorage.removeItem('token');
+      sessionStorage.removeItem('userInfo');
+      sessionStorage.removeItem('token');
       setUserInfo(null);
       navigate('/login');
     }

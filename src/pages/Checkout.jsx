@@ -201,7 +201,7 @@ const Checkout = () => {
       });
       
       setSuccess(true);
-      localStorage.removeItem('cart');
+      sessionStorage.removeItem('cart');
       
       setTimeout(() => {
         navigate('/profile', { state: { orderSuccess: true, orderId: response.data.createdOrder?._id } });
