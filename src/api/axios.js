@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+// Vite Environment Variable 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api', 
+  baseURL: import.meta.env.VITE_API_URL 
+    ? `${import.meta.env.VITE_API_URL}/api` 
+    : 'http://localhost:5000/api',
 });
 
 // Interceptor to attach the JWT token to every protected request
@@ -12,6 +15,7 @@ API.interceptors.request.use((config) => {
     try {
       const userInfo = JSON.parse(savedUser);
       let token = null;
+
       if (typeof userInfo === 'string') {
         token = userInfo;
       } else if (userInfo && userInfo.token) {
@@ -19,6 +23,7 @@ API.interceptors.request.use((config) => {
       } else if (userInfo && userInfo.data && userInfo.data.token) {
         token = userInfo.data.token;
       }
+
       if (token) {
         if (!config.headers) {
           config.headers = {};
