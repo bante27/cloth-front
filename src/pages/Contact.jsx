@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, Loader2, CheckCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import img1 from '../assets/image1.png';
+import img2 from '../assets/image2.png';
+import img3 from '../assets/image3.png';
+import img4 from '../assets/image4.jpg';
 
 const Contact = () => {
   const { darkMode } = useTheme();
@@ -15,12 +19,7 @@ const Contact = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   
-  const images = [
-    '/src/assets/image1.png',
-    '/src/assets/image2.png',
-    '/src/assets/image3.png',
-    '/src/assets/image4.jpg'
-  ];
+  const images = [img1, img2, img3, img4];
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -40,7 +39,10 @@ const Contact = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/messages', {
+ 
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      
+      const response = await fetch(`${baseUrl}/api/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -48,23 +50,23 @@ const Contact = () => {
 
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok) {
         setIsSubmitted(true);
         setFormData({ name: '', email: '', subject: '', message: '' });
         setTimeout(() => setIsSubmitted(false), 4000);
       } else {
-        alert("Error saving message!");
+        alert(data.message || "Error saving message!");
       }
     } catch (error) {
       console.error("Connection Error:", error);
-      alert("Server is not running!");
+      alert("Server is not running or CORS issue!");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 pb-10 ${
+    <div className={`min-h-screen transition-colors duration-300 pb-10 overflow-y-auto ${
       darkMode ? 'bg-gray-900' : 'bg-gray-50'
     }`}>
       
