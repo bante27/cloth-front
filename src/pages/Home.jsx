@@ -2,23 +2,19 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ShoppingBag, Star, ChevronRight, ArrowRight, Sparkles,
-  Truck, Shield, Clock, Flame, Eye, Heart, AlertCircle,
-  Mail, CheckCircle2, Timer
+  ShoppingBag, Star, ChevronRight, ArrowRight,
+  Mail, CheckCircle2, Timer, AlertCircle, Heart
 } from 'lucide-react';
 import API from '../api/axios';
 import { useTheme } from '../context/ThemeContext';
 
-// Import your hero images (unchanged)
+// Hero Assets
 import hero1 from '../assets/image.png';
 import hero2 from '../assets/image1.png';
 import hero3 from '../assets/image2.png';
 import hero4 from '../assets/image4.jpg';
 import hero5 from '../assets/image3.png';
 
-// ----------------------------------------------------------------------
-// Colour palette
-// ----------------------------------------------------------------------
 const COLORS = {
   primary: '#1A3A3A',
   primaryLight: '#2A5A5A',
@@ -30,9 +26,12 @@ const COLORS = {
   border: '#E2DCD5',
 };
 
-// ----------------------------------------------------------------------
-// Font loader (unchanged)
-// ----------------------------------------------------------------------
+const SECTION_ACCENTS = {
+  emerald: '#3F5D45',
+  orange: COLORS.accent,
+  red: '#B84A4A',
+};
+
 const FontLoader = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap');
@@ -42,9 +41,9 @@ const FontLoader = () => (
 );
 
 // ----------------------------------------------------------------------
-// Product Card – unchanged
+// Product Card – all clicks → filter (no product detail)
 // ----------------------------------------------------------------------
-const ProductCard = React.memo(({ product, onQuickAdd }) => {
+const ProductCard = React.memo(({ product, onQuickAdd, sectionType }) => {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
 
@@ -58,8 +57,24 @@ const ProductCard = React.memo(({ product, onQuickAdd }) => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
 
+  // ---------- Build the shop filter URL ----------
+  const buildFilterUrl = useCallback(() => {
+    const base = `/shop?category=${encodeURIComponent(product.category || 'Clothing')}`;
+    if (sectionType === 'new') return `${base}&newArrival=true`;
+    if (sectionType === 'deal') return `${base}&discount=true`;
+    if (sectionType === 'top') return `${base}&sort=topRated`;
+    return base;
+  }, [product.category, sectionType]);
+
+  // ---------- Handlers ----------
+  const handleFilterNavigation = (e) => {
+    e.stopPropagation(); // Prevent card click from firing twice
+    navigate(buildFilterUrl());
+  };
+
+  // Card body click also goes to filter
   const handleCardClick = () => {
-    navigate(`/product/${product._id}`);
+    navigate(buildFilterUrl());
   };
 
   return (
@@ -78,7 +93,8 @@ const ProductCard = React.memo(({ product, onQuickAdd }) => {
     >
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#D4A373] opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20" />
 
-      <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+      {/* Badges */}
+      <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 pointer-events-none">
         {product.isNew && (
           <span
             className="text-white text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 flex items-center gap-1"
@@ -105,6 +121,7 @@ const ProductCard = React.memo(({ product, onQuickAdd }) => {
         )}
       </div>
 
+      {/* Wishlist Button */}
       <button
         type="button"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -114,7 +131,11 @@ const ProductCard = React.memo(({ product, onQuickAdd }) => {
         <Heart size={13} className="text-[#1E1E1E] hover:text-[#B84A4A] transition-colors" />
       </button>
 
-      <div className={`relative aspect-square overflow-hidden ${darkMode ? 'bg-[#141110]' : 'bg-[#F1EBDC]'}`}>
+      {/* ---------- Product Image – click goes to filter ---------- */}
+      <div
+        onClick={handleFilterNavigation}
+        className={`relative aspect-square overflow-hidden cursor-pointer ${darkMode ? 'bg-[#141110]' : 'bg-[#F1EBDC]'}`}
+      >
         <img
           src={product.imageFront || '/placeholder.jpg'}
           alt={product.name}
@@ -139,24 +160,29 @@ const ProductCard = React.memo(({ product, onQuickAdd }) => {
             </div>
           </div>
         )}
+
+        {/* ---------- "View Details" overlay – also goes to filter ---------- */}
         {!isOutOfStock && (
-          <div className="absolute inset-0 bg-black/35 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
-            <span
-              className="bg-white text-[#1E1E1E] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 hover:bg-[#D4A373] hover:text-white transition-colors"
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
+            <button
+              type="button"
+              onClick={handleFilterNavigation}
+              className="bg-white/90 text-[#1E1E1E] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 hover:bg-[#D4A373] hover:text-white transition-colors"
               style={{ borderRadius: '2px' }}
             >
-              <Eye size={12} /> Quick
-            </span>
+              View Details <ChevronRight size={12} />
+            </button>
           </div>
         )}
       </div>
 
+      {/* Card details – all text inside also triggers card click */}
       <div className="p-3">
         <div className="flex items-center justify-between mb-1">
           <span className={`text-[8px] font-bold uppercase tracking-[0.15em] ${darkMode ? 'text-[#D4A373]' : 'text-[#96602B]'}`}>
             {product.category || 'Clothing'}
           </span>
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0.5 pointer-events-none">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
@@ -218,6 +244,9 @@ const ProductCard = React.memo(({ product, onQuickAdd }) => {
 });
 ProductCard.displayName = 'ProductCard';
 
+// ----------------------------------------------------------------------
+// Skeleton Loader
+// ----------------------------------------------------------------------
 const ProductSkeleton = () => {
   const { darkMode } = useTheme();
   return (
@@ -237,7 +266,7 @@ const ProductSkeleton = () => {
 };
 
 // ----------------------------------------------------------------------
-// Countdown (unchanged)
+// Countdown for Deals
 // ----------------------------------------------------------------------
 const useMidnightCountdown = () => {
   const getRemaining = () => {
@@ -247,10 +276,12 @@ const useMidnightCountdown = () => {
     return Math.max(0, midnight.getTime() - now.getTime());
   };
   const [remaining, setRemaining] = useState(getRemaining());
+  
   useEffect(() => {
     const interval = setInterval(() => setRemaining(getRemaining()), 1000);
     return () => clearInterval(interval);
   }, []);
+
   const totalSeconds = Math.floor(remaining / 1000);
   const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
   const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
@@ -260,10 +291,13 @@ const useMidnightCountdown = () => {
 
 const DealCountdown = ({ darkMode }) => {
   const { hours, minutes, seconds } = useMidnightCountdown();
+  
   const Unit = ({ value, label }) => (
     <div className="flex flex-col items-center">
       <span
-        className={`font-display text-base font-bold tabular-nums px-2 py-0.5 ${darkMode ? 'bg-[#1E1A17] text-[#D4A373]' : 'bg-white text-[#B84A4A]'}`}
+        className={`font-display text-base font-bold tabular-nums px-2 py-0.5 ${
+          darkMode ? 'bg-[#1E1A17] text-[#D4A373]' : 'bg-white text-[#B84A4A]'
+        }`}
         style={{ borderRadius: '2px' }}
       >
         {value}
@@ -271,6 +305,7 @@ const DealCountdown = ({ darkMode }) => {
       <span className="text-[7px] uppercase tracking-widest mt-0.5 font-bold text-gray-400">{label}</span>
     </div>
   );
+
   return (
     <div className={`inline-flex items-center gap-2 px-3 py-1.5 border ${darkMode ? 'bg-[#241417] border-[#4A2530]' : 'bg-[#FBEEEE] border-[#EDD6D6]'}`} style={{ borderRadius: '2px' }}>
       <Timer size={14} style={{ color: '#B84A4A' }} className="flex-shrink-0" />
@@ -289,7 +324,7 @@ const DealCountdown = ({ darkMode }) => {
 };
 
 // ----------------------------------------------------------------------
-// Newsletter (unchanged)
+// Newsletter Signup
 // ----------------------------------------------------------------------
 const NewsletterSignup = ({ darkMode }) => {
   const [email, setEmail] = useState('');
@@ -368,7 +403,7 @@ const NewsletterSignup = ({ darkMode }) => {
 };
 
 // ----------------------------------------------------------------------
-// Home – HERO SLIDESHOW KEPT, progress indicators and line removed
+// Main Home Component
 // ----------------------------------------------------------------------
 const Home = ({ addToCart }) => {
   const { darkMode } = useTheme();
@@ -383,7 +418,6 @@ const Home = ({ addToCart }) => {
 
   const HERO_DURATION = 5000;
 
-  // ORIGINAL hero slides – untouched
   const heroSlides = useMemo(() => [
     { image: hero1, tag: 'Premium Cultural Wear', titleEN: 'Upgrade Your Style.', desc: 'Look your best with our top collection. Find real handmade items updated daily.' },
     { image: hero2, tag: 'Modern & Trendy', titleEN: 'Own Your Tradition.', desc: 'Enjoy a mix of traditional cloth and modern fashion styles.' },
@@ -392,7 +426,6 @@ const Home = ({ addToCart }) => {
     { image: hero5, tag: 'Seasonal Outfits', titleEN: 'Timeless Looks.', desc: 'See special clothes handmade by expert weavers using safe materials.' },
   ], []);
 
-  // Slideshow timer – unchanged
   useEffect(() => {
     const timer = setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % heroSlides.length);
@@ -400,7 +433,6 @@ const Home = ({ addToCart }) => {
     return () => clearInterval(timer);
   }, [heroSlides.length]);
 
-  // Product fetching – unchanged
   const fetchHomeData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -445,10 +477,8 @@ const Home = ({ addToCart }) => {
     addToCart({ ...product, qty: 1 });
   }, [addToCart]);
 
-  const sectionAccent = { emerald: '#3F5D45', orange: COLORS.accent, red: '#B84A4A' };
-
-  const renderProductSection = (title, subtitle, eyebrow, products, viewAllLink, tone = 'orange', extra = null) => {
-    const accent = sectionAccent[tone];
+  const renderProductSection = (title, subtitle, eyebrow, products, viewAllLink, tone = 'orange', extra = null, sectionType = 'general') => {
+    const accent = SECTION_ACCENTS[tone];
     return (
       <div className="mb-16">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-5">
@@ -467,7 +497,7 @@ const Home = ({ addToCart }) => {
             className="font-body font-bold flex items-center gap-1 hover:gap-2 transition-all text-xs group border-b-2 border-transparent pb-0.5"
             style={{ color: accent }}
           >
-            See All <ChevronRight size={14} className="transform group-hover:translate-x-1 transition-transform" />
+            See All Market <ChevronRight size={14} className="transform group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
@@ -484,7 +514,7 @@ const Home = ({ addToCart }) => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {products.map((product) => (
-              <ProductCard key={product._id} product={product} onQuickAdd={handleQuickAdd} />
+              <ProductCard key={product._id} product={product} onQuickAdd={handleQuickAdd} sectionType={sectionType} />
             ))}
           </div>
         )}
@@ -496,11 +526,8 @@ const Home = ({ addToCart }) => {
     <div className={`font-body min-h-screen transition-colors duration-300 overflow-x-hidden ${darkMode ? 'bg-[#161311]' : 'bg-[#F8F5F0]'}`}>
       <FontLoader />
 
-      {/* ------------------------------------------------------------
-          HERO – slideshow with triangle, NO progress indicators or line
-          ------------------------------------------------------------ */}
+      {/* HERO SECTION */}
       <section className="relative min-h-[70vh] flex items-center justify-center px-4 py-14 overflow-hidden" style={{ backgroundColor: COLORS.primary }}>
-        {/* Triangle decorative shape */}
         <div
           className="absolute bottom-0 right-0 w-1/2 h-full z-0 pointer-events-none"
           style={{
@@ -510,7 +537,6 @@ const Home = ({ addToCart }) => {
           }}
         />
 
-        {/* Image slideshow */}
         <div className="absolute inset-0 z-0 pointer-events-none">
           <AnimatePresence mode="wait">
             <motion.img
@@ -527,7 +553,6 @@ const Home = ({ addToCart }) => {
           <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${COLORS.primary} 5%, rgba(26,58,58,0.5) 45%, rgba(0,0,0,0.5) 100%)` }} />
         </div>
 
-        {/* Content – icons removed earlier, now also no progress line */}
         <div className="relative z-10 max-w-5xl mx-auto text-center px-2">
           <div className="min-h-[320px] flex flex-col justify-center items-center">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-5" style={{ backgroundColor: 'rgba(212,163,115,0.15)', border: `1px solid ${COLORS.accent}`, borderRadius: '2px' }}>
@@ -547,25 +572,22 @@ const Home = ({ addToCart }) => {
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center w-full sm:w-auto">
               <button
                 type="button"
-                onClick={() => navigate('/shop?category=Clothing')}
+                onClick={() => navigate('/shop')}
                 className="w-full sm:w-auto text-[#1E1E1E] px-8 py-3 font-bold flex items-center justify-center gap-2 transition transform hover:scale-[1.02] active:scale-95 text-sm"
                 style={{ backgroundColor: COLORS.accent, borderRadius: '2px' }}
               >
-                Shop Now
+                Go To Market
               </button>
               <Link
-                to="/shop?category=Clothing&newArrival=true"
+                to="/shop?newArrival=true"
                 className="w-full sm:w-auto px-8 py-3 font-bold flex items-center justify-center gap-2 transition text-[#F7F1E6] hover:bg-[#F7F1E6] hover:text-[#1E1E1E] text-sm"
                 style={{ border: '1.5px solid rgba(247,241,230,0.5)', borderRadius: '2px' }}
               >
-                New Items
+                New Items Market
               </Link>
             </div>
           </div>
 
-          {/* PROGRESS BARS AND LINE REMOVED */}
-
-          {/* Feature items – icons removed, text only */}
           <div className="flex flex-wrap justify-center gap-3 md:gap-5 mt-8 pt-8" style={{ borderTop: '1px solid rgba(247,241,230,0.15)' }}>
             <div className="flex items-center gap-2 px-3 py-1.5 text-gray-300">
               <span className="text-[10px] md:text-xs font-semibold tracking-wide">Fast Delivery</span>
@@ -580,18 +602,18 @@ const Home = ({ addToCart }) => {
         </div>
       </section>
 
-      {/* Categories – unchanged */}
+      {/* CATEGORIES */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {[
-            { id: 'Men', subtitle: 'Classic Clothes' },
-            { id: 'Women', subtitle: 'Elegant Outfits' },
-            { id: 'Kids', subtitle: 'Fun & Comfort' },
-            { id: 'Accessories', subtitle: 'Complete Your Look' },
+            { id: 'Men', subtitle: 'Classic Clothes', param: 'gender=Men' },
+            { id: 'Women', subtitle: 'Elegant Outfits', param: 'gender=Women' },
+            { id: 'Kids', subtitle: 'Fun & Comfort', param: 'gender=Kids' },
+            { id: 'Accessories', subtitle: 'Complete Your Look', param: 'category=Accessories' },
           ].map((cat) => (
             <Link
               key={cat.id}
-              to={`/shop?category=Clothing&gender=${cat.id}`}
+              to={`/shop?${cat.param}`}
               className={`group relative overflow-hidden h-20 md:h-28 flex flex-col justify-center px-4 md:px-6 transition-all border ${
                 darkMode ? 'bg-[#1E1A17] border-[#332D28] hover:border-[#D4A373]/50' : 'bg-white border-[#E2DCD5] hover:border-[#D4A373]/60'
               }`}
@@ -609,7 +631,7 @@ const Home = ({ addToCart }) => {
         </div>
       </div>
 
-      {/* Product Sections – unchanged */}
+      {/* PRODUCT SECTIONS */}
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
           <div className="p-3 mb-6 text-xs font-medium flex items-center gap-2 border" style={{ backgroundColor: 'rgba(184,74,74,0.08)', borderColor: '#B84A4A', color: '#B84A4A', borderRadius: '2px' }}>
@@ -619,21 +641,24 @@ const Home = ({ addToCart }) => {
           </div>
         )}
 
+        {/* NEW ARRIVALS */}
         {renderProductSection(
           'New Arrivals', 'Fresh products added today.', 'Just In',
-          newProducts, '/shop?category=Clothing&newArrival=true&sort=priceAsc', 'emerald'
+          newProducts, '/shop?category=Clothing&newArrival=true', 'emerald', null, 'new'
         )}
 
+        {/* TOP RATED */}
         {renderProductSection(
           'Top Rated', 'Highly recommended by our community.', 'Favorites',
-          featuredProducts, '/shop?category=Clothing&sort=priceAsc', 'orange'
+          featuredProducts, '/shop?category=Clothing&sort=topRated', 'orange', null, 'top'
         )}
 
+        {/* SPECIAL OFFERS */}
         {dealProducts.length > 0 &&
           renderProductSection(
             'Special Offers', 'Limited discounts, sorted by lowest price.', 'Ends Tonight',
-            dealProducts, '/shop?category=Clothing&discount=true&sort=priceAsc', 'red',
-            <DealCountdown darkMode={darkMode} />
+            dealProducts, '/shop?category=Clothing&discount=true', 'red',
+            <DealCountdown darkMode={darkMode} />, 'deal'
           )
         }
       </div>
