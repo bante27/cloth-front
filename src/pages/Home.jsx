@@ -32,6 +32,15 @@ const SECTION_ACCENTS = {
   red: '#B84A4A',
 };
 
+const TibebBorder = ({ className = '', color = COLORS.accent, opacity = 0.8 }) => (
+  <svg className={className} viewBox="0 0 120 10" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity }}>
+    <polyline
+      points="0,10 6,1 12,10 18,1 24,10 30,1 36,10 42,1 48,10 54,1 60,10 66,1 72,10 78,1 84,10 90,1 96,10 102,1 108,10 114,1 120,10"
+      fill="none" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"
+    />
+  </svg>
+);
+
 const FontLoader = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap');
@@ -504,7 +513,7 @@ const Home = ({ addToCart }) => {
         {extra && <div className="mb-6">{extra}</div>}
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 bg-white dark:bg-[#241F1C] border border-white/20">
             {[...Array(8)].map((_, i) => <ProductSkeleton key={i} />)}
           </div>
         ) : products.length === 0 ? (
@@ -512,9 +521,11 @@ const Home = ({ addToCart }) => {
             No products found right now.
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 bg-white dark:bg-[#241F1C] border border-white/20 shadow-sm">
             {products.map((product) => (
-              <ProductCard key={product._id} product={product} onQuickAdd={handleQuickAdd} sectionType={sectionType} />
+              <div key={product._id} className="border-r border-b border-white/40 dark:border-[#332D28] last:border-r-0">
+                <ProductCard product={product} onQuickAdd={handleQuickAdd} sectionType={sectionType} />
+              </div>
             ))}
           </div>
         )}

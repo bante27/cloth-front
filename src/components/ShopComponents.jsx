@@ -58,10 +58,21 @@ export const ProductCard = ({ product, onSelect, onQuickAdd }) => {
         <p className={`text-[11px] line-clamp-2 mb-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           {product.description?.substring(0, 50) || 'Premium quality product'}
         </p>
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
           <span className={`text-xs font-bold ${isOutOfStock ? 'text-gray-400' : 'text-orange-600'}`}>
             Br{product.price?.toLocaleString()}
           </span>
+          {!isOutOfStock && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickAdd({ ...product, qty: 1 });
+              }}
+              className="bg-black text-white hover:bg-orange-500 text-[9px] font-bold px-2 py-1 rounded flex items-center gap-1 transition shadow-sm"
+            >
+              <ShoppingBag size={10} /> Add
+            </button>
+          )}
         </div>
         {!isOutOfStock ? (
           <button
@@ -69,12 +80,12 @@ export const ProductCard = ({ product, onSelect, onQuickAdd }) => {
               e.stopPropagation();
               onSelect(product);
             }}
-            className="mt-1.5 text-[8px] font-medium text-orange-500 hover:text-orange-600 flex items-center gap-0.5"
+            className="mt-1 text-[8px] font-medium text-orange-500 hover:text-orange-600 flex items-center gap-0.5"
           >
             View Details <ChevronRight size={8} />
           </button>
         ) : (
-          <p className="mt-1.5 text-[8px] font-medium text-red-500">Out of stock</p>
+          <p className="mt-1 text-[8px] font-medium text-red-500">Out of stock</p>
         )}
       </div>
     </div>
