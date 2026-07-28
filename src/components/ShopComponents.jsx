@@ -1,5 +1,6 @@
 // components/ShopComponents.jsx
 import React, { Fragment, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -8,7 +9,11 @@ export const ProductCard = ({ product, onSelect, onQuickAdd }) => {
   const { darkMode } = useTheme();
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-20px' }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
       onClick={() => !isOutOfStock && onSelect(product)}
       className={`group cursor-pointer w-full border ${darkMode ? 'bg-[#1E1A17] border-[#332D28]' : 'bg-white border-[#E7DFCF]'} overflow-hidden transition-all duration-300`}
       style={{ borderRadius: '2px' }}
@@ -76,7 +81,7 @@ export const ProductCard = ({ product, onSelect, onQuickAdd }) => {
           <p className="mt-1 text-[8px] font-medium text-red-500">Out of stock</p>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
