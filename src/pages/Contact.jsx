@@ -110,20 +110,20 @@ const Contact = () => {
               <motion.div 
                 key={i} 
                 whileHover={{ x: 5 }}
-                className={`backdrop-blur-md p-5 rounded-[1.8rem] shadow-lg border flex items-center space-x-4 transition-colors duration-300 ${
+                className={`backdrop-blur-md p-2.5 sm:p-5 rounded-xl sm:rounded-[1.8rem] shadow-md sm:shadow-lg border flex items-center space-x-2.5 sm:space-x-4 transition-colors duration-300 ${
                   darkMode 
                     ? 'bg-gray-800/95 border-gray-700' 
                     : 'bg-white/95 border-white'
                 }`}
               >
-                <div className={`p-3 rounded-xl shadow-inner ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} ${item.colorClass}`}>
-                    <item.icon size={20} />
+                <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-inner ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} ${item.colorClass}`}>
+                    <item.icon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h3 className={`font-bold text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                  <h3 className={`font-bold text-[11px] sm:text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
                     {item.title}
                   </h3>
-                  <p className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <p className={`text-[10px] sm:text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     {item.detail}
                   </p>
                 </div>
