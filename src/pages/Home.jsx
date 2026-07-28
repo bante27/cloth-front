@@ -513,7 +513,7 @@ const Home = ({ addToCart }) => {
         {extra && <div className="mb-6">{extra}</div>}
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 bg-white dark:bg-[#241F1C] border border-white/20">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0">
             {[...Array(8)].map((_, i) => <ProductSkeleton key={i} />)}
           </div>
         ) : products.length === 0 ? (
@@ -521,11 +521,9 @@ const Home = ({ addToCart }) => {
             No products found right now.
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 bg-white dark:bg-[#241F1C] border border-white/20 shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0">
             {products.map((product) => (
-              <div key={product._id} className="border-r border-b border-white/40 dark:border-[#332D28] last:border-r-0">
-                <ProductCard product={product} onQuickAdd={handleQuickAdd} sectionType={sectionType} />
-              </div>
+              <ProductCard key={product._id} product={product} onQuickAdd={handleQuickAdd} sectionType={sectionType} />
             ))}
           </div>
         )}
