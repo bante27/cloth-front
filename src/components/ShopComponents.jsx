@@ -10,11 +10,12 @@ export const ProductCard = ({ product, onSelect, onQuickAdd }) => {
   return (
     <div
       onClick={() => !isOutOfStock && onSelect(product)}
-      className={`group cursor-pointer w-64 border-r last:border-r-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}
+      className={`group cursor-pointer w-full border ${darkMode ? 'bg-[#1E1A17] border-[#332D28]' : 'bg-white border-[#E7DFCF]'} overflow-hidden transition-all duration-300`}
+      style={{ borderRadius: '2px' }}
       role="button"
       tabIndex={0}
     >
-      <div className={`relative aspect-square ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className={`relative aspect-square ${darkMode ? 'bg-[#141110]' : 'bg-[#F1EBDC]'}`}>
         <img
           src={product.imageFront}
           alt={product.name}
