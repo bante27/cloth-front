@@ -10,13 +10,13 @@ export const ProductCard = ({ product, onSelect, onQuickAdd }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 3, y: 80 }}
+      initial={{ opacity: 1, y: 80 }}
       whileInView={{ opacity: 1, y: 3 }}
-      viewport={{ once: true, margin: '-10px' }}
+      viewport={{ once: true, margin: '-30px' }}
       transition={{ duration: 2.3, ease: [1.25, 2, 1.5, 2] }}
       onClick={() => !isOutOfStock && onSelect(product)}
       className={`group cursor-pointer w-full border ${darkMode ? 'bg-[#1E1A17] border-[#332D28]' : 'bg-white border-[#E7DFCF]'} overflow-hidden transition-all duration-300`}
-      style={{ borderRadius: '2px' }}
+      style={{ borderRadius: '0.5px' }}
       role="button"
       tabIndex={0}
     >

@@ -88,17 +88,17 @@ const ProductCard = React.memo(({ product, onQuickAdd, sectionType }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.4 }}
+      initial={{ opacity: 2, y: 75 }}
+      whileInView={{ opacity: 1, y: 3 }}
+      viewport={{ once: true, margin: '-10px' }}
+      transition={{ duration: 2.3, ease: [1.25, 2, 1.5, 2] }}
       onClick={handleCardClick}
       className={`font-body group relative cursor-pointer overflow-hidden transition-all duration-300 border ${
         darkMode
           ? 'bg-[#1E1A17] border-[#332D28] hover:border-[#D4A373]/50'
           : 'bg-white border-[#E2DCD5] hover:border-[#D4A373]/60'
       } ${isOutOfStock ? 'opacity-70' : ''}`}
-      style={{ borderRadius: '2px' }}
+      style={{ borderRadius: '0.5px' }}
     >
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#D4A373] opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20" />
 
