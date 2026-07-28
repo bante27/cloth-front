@@ -561,7 +561,7 @@ const Checkout = () => {
                 <div className="mt-4">
                   <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800 mb-4">
                     <p className="text-sm font-medium text-orange-800 dark:text-orange-300 mb-1">Send payment to:</p>
-                    <p className="text-xl font-bold text-orange-700 dark:text-orange-400 font-mono">0911223344</p>
+                    <p className="text-xl font-bold text-orange-700 dark:text-orange-400 font-mono">09 27 99 38 94 </p>
                     <p className={`text-xs ${darkMode ? 'text-orange-400/80' : 'text-orange-600'} mt-1`}>
                       Amount Due: {finalTotalPrice.toLocaleString()} ETB
                     </p>
