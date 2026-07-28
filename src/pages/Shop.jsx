@@ -335,7 +335,7 @@ const Shop = ({ addToCart, userInfo }) => {
       <div className="fixed top-0 left-0 w-full z-40">
         <div className={`absolute inset-0 transition-colors duration-300 ${darkMode ? 'bg-[#1E1A17]' : 'bg-[#F7F1E6]'}`} />
         <div
-          className={`relative backdrop-blur-sm border-b pt-20 pb-4 px-4 md:px-12 ${darkMode ? 'bg-[#1E1A17]/80 border-[#332D28]' : 'bg-white/70 border-[#E7DFCF]'}`}
+          className={`relative backdrop-blur-sm border-b pt-20 pb-4 px-3 sm:px-4 md:px-12 ${darkMode ? 'bg-[#1E1A17]/80 border-[#332D28]' : 'bg-white/70 border-[#E7DFCF]'}`}
         >
           <div className="max-w-xl mx-auto">
             <form onSubmit={handleSearchSubmit} className="relative">
@@ -374,7 +374,7 @@ const Shop = ({ addToCart, userInfo }) => {
       </div>
 
       {/* Main Content */}
-      <div className="pt-40 px-4 md:px-12 max-w-[1800px] mx-auto">
+      <div className="pt-40 px-3 sm:px-4 md:px-12 max-w-[1800px] mx-auto">
         <div className="flex flex-col md:flex-row gap-8">
           {/* LEFT COLUMN – Contact Card */}
           <div className="hidden md:block md:w-72 shrink-0">
@@ -452,7 +452,7 @@ const Shop = ({ addToCart, userInfo }) => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN – Grid: 2 cols mobile, 4 cols desktop, no gaps */}
+          {/* RIGHT COLUMN – Grid: 2 cols mobile, 4 cols desktop, with gaps */}
           <div className="flex-1">
             <div className="mb-4 flex flex-wrap justify-between items-center gap-2">
               <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -475,14 +475,14 @@ const Shop = ({ addToCart, userInfo }) => {
               )}
 
               {loading ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-0">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
                   {Array(PRODUCTS_PER_PAGE).fill().map((_, i) => (
                     <ProductSkeleton key={i} />
                   ))}
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-0">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
                     {products.map((product) => (
                       <ProductCard
                         key={product._id}

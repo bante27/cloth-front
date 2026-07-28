@@ -1,16 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, LogOut, Menu, X, ChevronDown, Sparkles, Sun, Moon } from 'lucide-react';
+import { ShoppingBag, User, LogOut, Menu, X, ChevronDown, Sparkles, Sun, Moon, Phone } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const Navbar = ({ cartCount, onOpenCart, userInfo, onLogout }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRefs = useRef({});
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { darkMode, toggleDarkMode } = useTheme();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 30);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const getUserName = () => {
     const name = userInfo?.name || userInfo?.user?.name || "";
@@ -79,15 +88,29 @@ const Navbar = ({ cartCount, onOpenCart, userInfo, onLogout }) => {
           {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
 
-        {/* Logo */}
-        <Link to="/" className="group relative">
-          <span className={`text-base md:text-lg font-black tracking-tighter ${
-            darkMode ? 'text-white' : 'text-gray-900'
-          }`}>
-            HABESHA<span className="text-orange-500">STYLE</span>
-          </span>
-          <Sparkles size={10} className="absolute -top-1 -right-3 text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </Link>
+        {/* Logo / Scrolled Call Us */}
+        {isScrolled ? (
+          <a
+            href="tel:0927993894"
+            className={`flex items-center gap-1.5 px-2.5 py-1 transition-all animate-in fade-in duration-200 ${
+              darkMode ? 'bg-white/10 text-white' : 'bg-orange-50 text-orange-900 border border-orange-200'
+            }`}
+            style={{ borderRadius: '2px' }}
+            title="Call Us"
+          >
+            <Phone size={13} className="text-orange-500 shrink-0" />
+            <span className="text-[10px] md:text-xs font-bold tracking-tight">0927993894</span>
+          </a>
+        ) : (
+          <Link to="/" className="group relative">
+            <span className={`text-base md:text-lg font-black tracking-tighter ${
+              darkMode ? 'text-white' : 'text-gray-900'
+            }`}>
+              HABESHA<span className="text-orange-500">STYLE</span>
+            </span>
+            <Sparkles size={10} className="absolute -top-1 -right-3 text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Link>
+        )}
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-7">
