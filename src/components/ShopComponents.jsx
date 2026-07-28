@@ -27,28 +27,16 @@ export const ProductCard = ({ product, onSelect, onQuickAdd }) => {
             NEW
           </div>
         )}
-        {isOutOfStock && (
+        {isOutOfStock ? (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
             <div className="bg-red-500 text-white font-bold text-[9px] px-2 py-1 rounded transform -rotate-12">
               SOLD OUT
             </div>
           </div>
-        )}
-        {!isOutOfStock && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onQuickAdd({ ...product, qty: 1 });
-            }}
-            className="absolute bottom-2 right-2 bg-white rounded-full p-1.5 hover:bg-orange-500 hover:text-white transition"
-          >
-            <ShoppingBag size={12} />
-          </button>
-        )}
-        {!isOutOfStock && product.countInStock < 5 && (
-          <span className="absolute top-2 right-2 bg-orange-500 text-white text-[7px] font-bold px-1.5 py-0.5 rounded">
-            {product.countInStock} left
-          </span>
+        ) : product.countInStock <= 3 && (
+          <div className="absolute top-2 right-2 bg-red-600 text-white text-[8px] font-bold px-2 py-0.5 rounded animate-pulse shadow-md z-10">
+            Only {product.countInStock} left!
+          </div>
         )}
       </div>
       <div className="p-2">
