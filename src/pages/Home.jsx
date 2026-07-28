@@ -446,16 +446,16 @@ const Home = ({ addToCart }) => {
       const allProducts = Array.isArray(data) ? data : data.products || [];
 
       let featured = allProducts.filter(p => (p.rating || 0) >= 4.5 || p.isFeatured === true);
-      if (featured.length < 4) featured = allProducts.slice(0, 6);
+      if (featured.length < 4) featured = allProducts.slice(0, 8);
       featured = [...featured].sort(byLowestPriceFirst);
-      setFeaturedProducts(featured.slice(0, 6));
+      setFeaturedProducts(featured.slice(0, 8));
 
       let newArrivals = allProducts.filter(p => p.isNew === true);
       if (newArrivals.length === 0) {
         newArrivals = [...allProducts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       }
       newArrivals = [...newArrivals].sort(byLowestPriceFirst);
-      setNewProducts(newArrivals.slice(0, 6));
+      setNewProducts(newArrivals.slice(0, 8));
 
       const deals = allProducts.filter(p => p.discount && p.discount > 0).sort(byLowestPriceFirst);
       setDealProducts(deals.slice(0, 6));
@@ -504,15 +504,15 @@ const Home = ({ addToCart }) => {
         {extra && <div className="mb-6">{extra}</div>}
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, i) => <ProductSkeleton key={i} />)}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {[...Array(8)].map((_, i) => <ProductSkeleton key={i} />)}
           </div>
         ) : products.length === 0 ? (
           <div className={`font-body text-center py-12 border-2 border-dashed ${darkMode ? 'border-[#332D28] text-gray-500' : 'border-[#E2DCD5] text-gray-400'}`}>
             No products found right now.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {products.map((product) => (
               <ProductCard key={product._id} product={product} onQuickAdd={handleQuickAdd} sectionType={sectionType} />
             ))}
@@ -603,8 +603,8 @@ const Home = ({ addToCart }) => {
       </section>
 
       {/* CATEGORIES */}
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="max-w-[1600px] mx-auto px-8 sm:px-12 lg:px-20 py-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {[
             { id: 'Men', subtitle: 'Classic Clothes', param: 'gender=Men' },
             { id: 'Women', subtitle: 'Elegant Outfits', param: 'gender=Women' },
@@ -632,7 +632,7 @@ const Home = ({ addToCart }) => {
       </div>
 
       {/* PRODUCT SECTIONS */}
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-8 sm:px-12 lg:px-20 py-8">
         {error && (
           <div className="p-3 mb-6 text-xs font-medium flex items-center gap-2 border" style={{ backgroundColor: 'rgba(184,74,74,0.08)', borderColor: '#B84A4A', color: '#B84A4A', borderRadius: '2px' }}>
             <AlertCircle size={16} />
@@ -644,13 +644,13 @@ const Home = ({ addToCart }) => {
         {/* NEW ARRIVALS */}
         {renderProductSection(
           'New Arrivals', 'Fresh products added today.', 'Just In',
-          newProducts, '/shop?category=Clothing&newArrival=true', 'emerald', null, 'new'
+          newProducts, '/shop?category=Clothing&newArrival=true', 'emerald', null, 'new', 'lg:grid-cols-4'
         )}
 
         {/* TOP RATED */}
         {renderProductSection(
           'Top Rated', 'Highly recommended by our community.', 'Favorites',
-          featuredProducts, '/shop?category=Clothing&sort=topRated', 'orange', null, 'top'
+          featuredProducts, '/shop?category=Clothing&sort=topRated', 'orange', null, 'top', 'lg:grid-cols-4'
         )}
 
         {/* SPECIAL OFFERS */}
@@ -658,12 +658,14 @@ const Home = ({ addToCart }) => {
           renderProductSection(
             'Special Offers', 'Limited discounts, sorted by lowest price.', 'Ends Tonight',
             dealProducts, '/shop?category=Clothing&discount=true', 'red',
-            <DealCountdown darkMode={darkMode} />, 'deal'
+            <DealCountdown darkMode={darkMode} />, 'deal', 'lg:grid-cols-4'
           )
         }
       </div>
 
-      <NewsletterSignup darkMode={darkMode} />
+      <div className="px-8 sm:px-12 lg:px-20">
+        <NewsletterSignup darkMode={darkMode} />
+      </div>
     </div>
   );
 };
