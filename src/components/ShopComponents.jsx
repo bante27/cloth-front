@@ -10,7 +10,7 @@ export const ProductCard = ({ product, onSelect, onQuickAdd }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 80 }}
+      initial={{ opacity: 3, y: 80 }}
       whileInView={{ opacity: 1, y: 3 }}
       viewport={{ once: true, margin: '-10px' }}
       transition={{ duration: 2.3, ease: [1.25, 2, 1.5, 2] }}
