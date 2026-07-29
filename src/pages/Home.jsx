@@ -343,6 +343,21 @@ const NewsletterSignup = ({ darkMode }) => {
   });
   const [errorMessage, setErrorMessage] = useState('');
 
+  useEffect(() => {
+    const checkSubscriptionStatus = async () => {
+      try {
+        const res = await API.get('/coupons/status');
+        if (res.data && res.data.subscribed) {
+          localStorage.setItem('newsletter_subscribed', 'true');
+          setStatus('done');
+        }
+      } catch (err) {
+        console.error('Failed to check subscription status:', err);
+      }
+    };
+    checkSubscriptionStatus();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim() || !email.includes('@')) {
