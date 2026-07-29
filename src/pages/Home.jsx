@@ -338,7 +338,7 @@ const DealCountdown = ({ darkMode }) => {
 const NewsletterSignup = ({ darkMode }) => {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState(() => {
-    const isSubscribed = sessionStorage.getItem('newsletter_subscribed');
+    const isSubscribed = localStorage.getItem('newsletter_subscribed');
     return isSubscribed === 'true' ? 'done' : 'idle';
   });
   const [errorMessage, setErrorMessage] = useState('');
@@ -353,7 +353,7 @@ const NewsletterSignup = ({ darkMode }) => {
     setStatus('submitting');
     try {
       await API.post('/coupons/subscribe', { email });
-      sessionStorage.setItem('newsletter_subscribed', 'true');
+      localStorage.setItem('newsletter_subscribed', 'true');
       setStatus('done');
     } catch (err) {
       console.error('Subscription error:', err);
